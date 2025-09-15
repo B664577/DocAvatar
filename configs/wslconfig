@@ -1,0 +1,21 @@
+[wsl2]
+# 分配给 WSL 的内存 (系统 54GB 的 70% = 约 38GB)
+memory=38GB
+
+# CPU 核心数 (您有 24 核，分配 20 核给 WSL)
+processors=20
+
+# 交换空间 (设置为 16GB)
+swap=16GB
+
+# 启用本地主机转发
+localhostForwarding=true
+
+# 启用嵌套虚拟化 (用于 Docker)
+nestedVirtualization=true
+
+# 内核参数
+kernelCommandLine=vsyscall=emulate
+
+# 网络配置
+networkingMode=mirrored

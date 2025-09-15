@@ -1,0 +1,38 @@
+# 使用国内镜像源
+FROM registry.cn-hangzhou.aliyuncs.com/aliyun-node/alpine-node:18
+
+# 设置工作目录
+WORKDIR /app
+
+# 配置npm使用国内源
+RUN npm config set registry https://registry.npmmirror.com
+
+# 安装必要的工具（包括curl用于健康检查）
+RUN apk add --no-cache curl
+
+# 复制package文件
+COPY package*.json ./
+
+# 安装依赖
+RUN npm ci --only=production && npm cache clean --force
+
+# 复制应用代码
+COPY . .
+
+# 创建必要的目录并设置权限
+RUN mkdir -p uploads config logs && \
+    chmod -R 755 uploads config logs && \
+    chown -R node:node /app
+
+# 切换到非root用户
+USER node
+
+# 暴露端口
+EXPOSE 9301
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:9301/health || exit 1
+
+# 启动应用
+CMD ["node", "server.js"]

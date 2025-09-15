@@ -1,0 +1,127 @@
+# AI思维导图服务器部署命令清单
+# 复制以下命令到服务器执行
+
+## 📋 完整部署命令（一次性复制执行）
+
+```bash
+# 1. 安装Docker环境（Ubuntu/Debian）
+sudo apt update && sudo apt install -y docker.io docker-compose
+
+# 2. 启动Docker服务
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+
+# 3. 创建项目目录
+sudo mkdir -p /opt/ai-mindmap
+cd /opt/ai-mindmap
+
+# 4. 上传项目文件后，设置权限
+sudo chown -R $USER:$USER /opt/ai-mindmap
+
+# 5. 构建并启动（Docker Compose方式）
+sudo docker-compose up -d --build
+
+# 6. 验证部署
+sudo docker ps
+sudo docker logs ai-mindmap-container
+```
+
+## 🎯 快速测试命令
+
+```bash
+# 检查端口是否开放
+sudo ufw allow 9301
+
+# 测试本地访问
+curl http://localhost:9301
+
+# 查看容器IP
+sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ai-mindmap-container
+```
+
+## 🔧 故障排除命令
+
+```bash
+# 查看容器状态
+sudo docker ps -a
+
+# 查看详细日志
+sudo docker logs -f ai-mindmap-container
+
+# 进入容器调试
+sudo docker exec -it ai-mindmap-container /bin/sh
+
+# 重启容器
+sudo docker restart ai-mindmap-container
+
+# 清理并重新部署
+sudo docker-compose down
+sudo docker system prune -f
+sudo docker-compose up -d --build
+```
+
+## 📊 常用管理命令
+
+```bash
+# 停止服务
+sudo docker-compose down
+
+# 重启服务
+sudo docker-compose restart
+
+# 更新镜像
+sudo docker-compose pull
+sudo docker-compose up -d
+
+# 查看资源使用
+sudo docker stats ai-mindmap-container
+```
+
+## 🌐 防火墙配置
+
+```bash
+# Ubuntu/Debian
+sudo ufw allow 9301
+sudo ufw status
+
+# CentOS/RHEL
+sudo firewall-cmd --permanent --add-port=9301/tcp
+sudo firewall-cmd --reload
+```
+
+## 📂 文件检查清单
+
+部署前确保以下文件存在：
+- [ ] Dockerfile
+- [ ] docker-compose.yml
+- [ ] server.js
+- [ ] package.json
+- [ ] package-lock.json
+- [ ] 所有前端文件
+- [ ] uploads/ 目录
+
+## ✅ 部署验证
+
+```bash
+# 1. 容器运行检查
+sudo docker ps | grep ai-mindmap
+
+# 2. 端口监听检查
+sudo netstat -tulpn | grep 9301
+
+# 3. 外部访问测试
+curl -I http://$(hostname -I | awk '{print $1}'):9301
+```
+
+## 🚀 一键部署脚本
+
+保存以下内容为 `deploy.sh` 并执行：
+```bash
+#!/bin/bash
+sudo apt update && sudo apt install -y docker.io docker-compose
+sudo systemctl start docker && sudo systemctl enable docker
+sudo mkdir -p /opt/ai-mindmap && cd /opt/ai-mindmap
+# 上传文件后执行：
+sudo docker-compose up -d --build
+```

@@ -1,0 +1,851 @@
+[0;34m🔧 初始化环境...[0m
+[0;34m🧹 清理原项目服务: ./dotsocr.sh stop[0m
+[0;34m停止所有服务...[0m
+[0;32m✅ 所有服务已停止[0m
+[0;34m📦 激活环境: conda activate docavatar[0m
+[0;34m🔎 当前环境: docavatar (/home/long/miniconda3/envs/docavatar/bin/python)[0m
+[torch] 2.7.0+cu128 | cuda_available=True | cuda=12.8
+INFO 09-04 12:08:15 [__init__.py:244] Automatically detected platform cuda.
+[vllm] OK
+[0;34m🔎 当前环境: docavatar (/home/long/miniconda3/envs/docavatar/bin/python)[0m
+[torch] 2.7.0+cu128 | ok=True | cuda_available=True | cuda=12.8
+[0;34m使用权重目录: /home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights/DotsOCR[0m
+[0;34mPYTHONPATH 已设置: /home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights:/home/long/mnt/d/AIPJ/016DocAvatar/dotsocr:/home/long/mnt/d/AIPJ/016DocAvatar/dots_ocr_plugin:./weights:./weights:[0m
+[0;34mDOTS_WEIGHTS_DIR=/home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights/DotsOCR[0m
+[0;34mDOTS_READ_TIMEOUT_SECS=1800[0m
+[0;34m⚙️ 检查/构建 flash-attn（HF 加速）...[0m
+[flash-attn] already installed
+[vllm] installed= True
+[0;34m已存在 vLLM CLI 注入，跳过[0m
+[0;34m🚀 启动 vLLM 服务器 (vllm serve)...[0m
+[0;32mvLLM 已启动 (PID: 214712) · 模型: /home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights/DotsOCR[0m
+[0;34m🌐 启动 API 服务 (FastAPI on 8080, mode=hf 默认；可随时切换 vllm/hf/cpu)...[0m
+[0;34m注意力实现: flash_attention_2 (flash-attn 已安装)[0m
+[0;32mAPI 就绪 (http://127.0.0.1:8080)[0m
+[0;34m🖼️ 启动 DocAvatar Gradio 界面...[0m
+[0;32mGradio 界面就绪！(http://localhost:7860)[0m
+
+=========================================
+[0;32m🎉 DocAvatar 开发环境启动成功！[0m
+=========================================
+[0;34m📱 界面地址:[0m http://localhost:7860
+[0;34m🚀 vLLM API:[0m http://localhost:8000
+[0;34m🔗 DocAvatar API:[0m http://localhost:8080
+
+[0;33m提示:[0m 默认 API 模式为 hf；可通过 query 'mode=vllm|hf|cpu' 切换。
+[0;33m停止:[0m 可运行 ./dotsocr.sh stop 停止 vLLM；或 pkill -f docavatar_gradio.py 停止新界面。
+=========================================
+[0;34m📜 跟随日志：vLLM 与 API（Ctrl+C 退出，服务不停止）[0m
+--- tail -f vllm.log ---
+--- tail -f api.log ---
+INFO 09-04 12:08:20 [__init__.py:244] Automatically detected platform cuda.
+INFO 09-04 12:08:24 [api_server.py:1287] vLLM API server version 0.9.1
+INFO 09-04 12:08:24 [cli_args.py:309] non-default args: {'chat_template_content_format': 'string', 'model': '/home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights/DotsOCR', 'trust_remote_code': True, 'max_model_len': 16384, 'served_model_name': ['model'], 'gpu_memory_utilization': 0.75}
+INFO 09-04 12:08:24 [config.py:823] This model supports multiple tasks: {'score', 'generate', 'embed', 'reward', 'classify'}. Defaulting to 'generate'.
+INFO 09-04 12:08:24 [config.py:2195] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO:     Started server process [214720]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50810 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50818 - "GET /health?mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51224 - "GET /health HTTP/1.1" 200 OK
+WARNING 09-04 12:08:26 [env_override.py:17] NCCL_CUMEM_ENABLE is set to 0, skipping override. This may increase memory overhead with cudagraph+allreduce: https://github.com/NVIDIA/nccl/issues/1234
+INFO 09-04 12:08:27 [__init__.py:244] Automatically detected platform cuda.
+INFO 09-04 12:08:29 [core.py:455] Waiting for init message from front-end.
+INFO 09-04 12:08:29 [core.py:70] Initializing a V1 LLM engine (v0.9.1) with config: model='/home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights/DotsOCR', speculative_config=None, tokenizer='/home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights/DotsOCR', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config={}, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=16384, download_dir=None, load_format=LoadFormat.AUTO, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_backend=''), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None), seed=0, served_model_name=model, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=True, chunked_prefill_enabled=True, use_async_output_proc=True, pooler_config=None, compilation_config={"level":3,"debug_dump_path":"","cache_dir":"","backend":"","custom_ops":["none"],"splitting_ops":["vllm.unified_attention","vllm.unified_attention_with_output"],"use_inductor":true,"compile_sizes":[],"inductor_compile_config":{"enable_auto_functionalized_v2":false},"inductor_passes":{},"use_cudagraph":true,"cudagraph_num_of_warmups":1,"cudagraph_capture_sizes":[512,504,496,488,480,472,464,456,448,440,432,424,416,408,400,392,384,376,368,360,352,344,336,328,320,312,304,296,288,280,272,264,256,248,240,232,224,216,208,200,192,184,176,168,160,152,144,136,128,120,112,104,96,88,80,72,64,56,48,40,32,24,16,8,4,2,1],"cudagraph_copy_inputs":false,"full_cuda_graph":false,"max_capture_size":512,"local_cache_dir":null}
+WARNING 09-04 12:08:30 [utils.py:2737] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <vllm.v1.worker.gpu_worker.Worker object at 0x7f430d239eb0>
+INFO 09-04 12:08:31 [parallel_state.py:1065] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0, EP rank 0
+WARNING 09-04 12:08:31 [interface.py:376] Using 'pin_memory=False' as WSL is detected. This may slow down the performance.
+Using a slow image processor as `use_fast` is unset and a slow processor was saved with this model. `use_fast=True` will be the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.
+WARNING 09-04 12:08:32 [topk_topp_sampler.py:59] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+INFO 09-04 12:08:32 [gpu_model_runner.py:1595] Starting to load model /home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/weights/DotsOCR...
+INFO 09-04 12:08:32 [gpu_model_runner.py:1600] Loading model from scratch...
+INFO 09-04 12:08:32 [cuda.py:252] Using Flash Attention backend on V1 engine.
+Loading safetensors checkpoint shards:   0% Completed | 0/2 [00:00<?, ?it/s]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading safetensors checkpoint shards:  50% Completed | 1/2 [00:48<00:48, 48.73s/it]
+Loading checkpoint shards:  50%|█████     | 1/2 [00:42<00:42, 42.11s/it]Loading safetensors checkpoint shards: 100% Completed | 2/2 [01:05<00:00, 30.21s/it]
+Loading safetensors checkpoint shards: 100% Completed | 2/2 [01:05<00:00, 32.99s/it]
+
+Loading checkpoint shards: 100%|██████████| 2/2 [00:59<00:00, 27.47s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:59<00:00, 29.67s/it]
+INFO 09-04 12:09:39 [default_loader.py:272] Loading weights took 64.35 seconds
+INFO 09-04 12:09:39 [gpu_model_runner.py:1624] Model loading took 5.7174 GiB and 64.542518 seconds
+INFO 09-04 12:09:39 [gpu_model_runner.py:1978] Encoder cache will be initialized with a budget of 14400 tokens, and profiled with 1 image items of the maximum feature size.
+Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+INFO 09-04 12:11:30 [backends.py:462] Using cache directory: /home/long/.cache/vllm/torch_compile_cache/16cf4bc5ba/rank_0_0 for vLLM's torch.compile
+INFO 09-04 12:11:30 [backends.py:472] Dynamo bytecode transform time: 5.74 s
+INFO 09-04 12:11:38 [backends.py:135] Directly load the compiled graph(s) for shape None from the cache, took 7.046 s
+INFO 09-04 12:11:38 [monitor.py:34] torch.compile takes 5.74 s in total
+INFO 09-04 12:11:41 [gpu_worker.py:227] Available KV cache memory: 2.83 GiB
+INFO 09-04 12:11:41 [kv_cache_utils.py:715] GPU KV cache size: 106,032 tokens
+INFO 09-04 12:11:41 [kv_cache_utils.py:719] Maximum concurrency for 16,384 tokens per request: 6.47x
+INFO 09-04 12:12:15 [gpu_model_runner.py:2048] Graph capturing finished in 34 secs, took 0.31 GiB
+INFO 09-04 12:12:15 [core.py:171] init engine (profile, create kv cache, warmup model) took 155.77 seconds
+INFO 09-04 12:12:15 [loggers.py:137] Engine 000: vllm cache_config_info with initialization after num_gpu_blocks is: 6627
+INFO 09-04 12:12:15 [api_server.py:1349] Starting vLLM API server 0 on http://0.0.0.0:8000
+INFO 09-04 12:12:15 [launcher.py:29] Available routes are:
+INFO 09-04 12:12:15 [launcher.py:37] Route: /openapi.json, Methods: HEAD, GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /docs, Methods: HEAD, GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /docs/oauth2-redirect, Methods: HEAD, GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /redoc, Methods: HEAD, GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /health, Methods: GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /load, Methods: GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /ping, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /ping, Methods: GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /tokenize, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /detokenize, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v1/models, Methods: GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /version, Methods: GET
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v1/chat/completions, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v1/completions, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v1/embeddings, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /pooling, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /classify, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /score, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v1/score, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v1/audio/transcriptions, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /rerank, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v1/rerank, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /v2/rerank, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /invocations, Methods: POST
+INFO 09-04 12:12:15 [launcher.py:37] Route: /metrics, Methods: GET
+INFO:     Started server process [214712]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+use hf model, num_thread will be set to 1
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_214720_d38ce412
+INFO:     127.0.0.1:34480 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_214720_11b24dd2.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  20%|██        | 1/5 [00:35<02:21, 35.34s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [01:20<02:03, 41.20s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [02:00<01:21, 40.60s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [02:31<00:36, 36.77s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [03:32<00:00, 45.59s/it]Processing PDF pages: 100%|██████████| 5/5 [03:32<00:00, 42.53s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_214720_11b24dd2
+INFO:     127.0.0.1:57528 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [214720]
+tail: api.log: file truncated
+INFO:     Started server process [252018]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57356 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57368 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [01:41<01:41, 101.79s/it]Loading checkpoint shards: 100%|██████████| 2/2 [02:18<00:00, 63.64s/it] Loading checkpoint shards: 100%|██████████| 2/2 [02:18<00:00, 69.36s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_252018_52ea696f.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [00:36<02:24, 36.24s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [01:21<02:04, 41.51s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [02:02<01:22, 41.45s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [02:34<00:37, 37.50s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [03:35<00:00, 46.03s/it]Processing PDF pages: 100%|██████████| 5/5 [03:35<00:00, 43.08s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_252018_52ea696f
+INFO:     127.0.0.1:41828 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43426 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [252018]
+tail: api.log: file truncated
+INFO:     Started server process [273074]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:33862 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33870 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [01:31<01:31, 91.85s/it]Loading checkpoint shards: 100%|██████████| 2/2 [02:10<00:00, 60.30s/it]Loading checkpoint shards: 100%|██████████| 2/2 [02:10<00:00, 65.04s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_273074_47b828eb.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [00:36<02:24, 36.23s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [01:22<02:05, 41.87s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [02:03<01:23, 41.56s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [02:35<00:37, 37.93s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [03:38<00:00, 46.89s/it]Processing PDF pages: 100%|██████████| 5/5 [03:38<00:00, 43.68s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_273074_47b828eb
+INFO:     127.0.0.1:43314 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [273074]
+tail: api.log: file truncated
+INFO:     Started server process [282162]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:43348 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54006 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:41<00:41, 41.74s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:59<00:00, 27.52s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:59<00:00, 29.66s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_282162_7e2f2036.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]
+INFO:     127.0.0.1:36302 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 500 Internal Server Error
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [282162]
+tail: api.log: file truncated
+INFO:     Started server process [283908]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:48584 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32940 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:28<00:28, 28.43s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:46<00:00, 22.10s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:46<00:00, 23.05s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_283908_089e5994.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]
+INFO:     127.0.0.1:37556 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:58522 - "GET /health HTTP/1.1" 200 OK
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_283908_36b2f032.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]
+INFO:     127.0.0.1:47452 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 500 Internal Server Error
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [283908]
+tail: api.log: file truncated
+INFO:     Started server process [286785]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56228 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40894 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:45<00:45, 45.24s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:02<00:00, 28.86s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:02<00:00, 31.32s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_286785_f1b969a5.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]
+INFO:     127.0.0.1:60826 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:36112 - "GET /health HTTP/1.1" 200 OK
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_286785_48195908.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]
+INFO:     127.0.0.1:36254 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:46148 - "GET /health HTTP/1.1" 200 OK
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_286785_460da81c.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [00:37<02:29, 37.29s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+Processing PDF pages:  40%|████      | 2/5 [01:23<02:07, 42.34s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [02:03<01:23, 41.58s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [02:35<00:37, 37.71s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [03:37<00:00, 46.60s/it]Processing PDF pages: 100%|██████████| 5/5 [03:37<00:00, 43.59s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_286785_460da81c
+INFO:     127.0.0.1:59124 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [286785]
+tail: api.log: file truncated
+INFO:     Started server process [291017]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58530 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49032 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:38<00:38, 38.50s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:56<00:00, 26.67s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:56<00:00, 28.45s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_291017_78fac743.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [01:49<07:18, 109.68s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [03:22<04:58, 99.67s/it] Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [04:20<02:41, 80.83s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [04:53<01:01, 61.81s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [05:54<00:00, 61.62s/it]Processing PDF pages: 100%|██████████| 5/5 [05:54<00:00, 70.94s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_291017_78fac743
+INFO:     127.0.0.1:48686 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [291017]
+tail: api.log: file truncated
+INFO:     Started server process [295974]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:35120 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34962 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:40<00:40, 40.47s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:58<00:00, 27.22s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:58<00:00, 29.21s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_295974_95dc544f.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [01:47<07:10, 107.65s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [03:05<04:30, 90.06s/it] Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [04:07<02:34, 77.43s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [04:41<01:00, 60.08s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [05:47<00:00, 62.18s/it]Processing PDF pages: 100%|██████████| 5/5 [05:47<00:00, 69.44s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_295974_95dc544f
+INFO:     127.0.0.1:57052 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf&user_hint=%E5%8E%BB%E6%8E%89%E9%A1%B5%E7%9C%89%E9%A1%B5%E8%84%9A HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [295974]
+tail: api.log: file truncated
+INFO:     Started server process [302143]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:42398 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37540 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:45<00:45, 45.43s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:05<00:00, 30.49s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:05<00:00, 32.73s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_302143_b9df1469.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [01:51<07:27, 111.81s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [03:23<05:00, 100.15s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [04:04<02:25, 72.88s/it] Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [04:36<00:56, 56.77s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [05:39<00:00, 58.98s/it]Processing PDF pages: 100%|██████████| 5/5 [05:39<00:00, 67.84s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_302143_b9df1469
+INFO:     127.0.0.1:37548 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [302143]
+tail: api.log: file truncated
+INFO:     Started server process [309655]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50046 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50048 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:04<00:04,  4.93s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:21<00:00, 11.78s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:21<00:00, 10.75s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_309655_4165978f.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [01:49<07:16, 109.23s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [03:15<04:46, 95.52s/it] Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [03:55<02:20, 70.20s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [04:25<00:54, 54.62s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [05:27<00:00, 57.10s/it]Processing PDF pages: 100%|██████████| 5/5 [05:27<00:00, 65.49s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_309655_4165978f
+INFO:     127.0.0.1:43722 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [309655]
+tail: api.log: file truncated
+  File "/mnt/d/AIPJ/016DocAvatar/dotsocr/api/server.py", line 204
+    payload = JSONResponse(content=json_loads := __import__('json').loads(data))
+                                              ^^
+SyntaxError: invalid syntax
+tail: api.log: file truncated
+INFO:     Started server process [387887]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:48838 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48854 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:48<00:48, 48.07s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:05<00:00, 30.24s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:05<00:00, 32.91s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_387887_b33d5b31.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [01:43<06:52, 103.24s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [02:59<04:22, 87.66s/it] Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [03:39<02:11, 65.82s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [04:10<00:51, 51.94s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [05:13<00:00, 55.76s/it]Processing PDF pages: 100%|██████████| 5/5 [05:13<00:00, 62.61s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_387887_b33d5b31
+INFO:     127.0.0.1:36572 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [387887]
+tail: api.log: file truncated
+INFO:     Started server process [393160]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:35076 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35090 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:42<00:42, 42.53s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:00<00:00, 28.25s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:00<00:00, 30.39s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:37814 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58182 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50080 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [393160]
+tail: api.log: file truncated
+INFO:     Started server process [608753]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:39248 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39262 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60460 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48526 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58942 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [608753]
+tail: api.log: file truncated
+INFO:     Started server process [611692]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:44156 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52048 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:36<00:36, 36.09s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:52<00:00, 24.23s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:52<00:00, 26.01s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:38526 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53430 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53446 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56036 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49664 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49674 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57558 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57564 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57570 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57584 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57596 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57610 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57622 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57628 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44930 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44942 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [611692]
+tail: api.log: file truncated
+INFO:     Started server process [625752]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:46928 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [625752]
+tail: api.log: file truncated
+INFO:     Started server process [626613]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50726 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [626613]
+tail: api.log: file truncated
+INFO:     Started server process [628175]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:47424 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50040 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50046 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [628175]
+tail: api.log: file truncated
+INFO:     Started server process [631488]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52506 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48266 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48280 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [631488]
+tail: api.log: file truncated
+INFO:     Started server process [637251]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57768 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57784 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:43<00:43, 43.68s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:03<00:00, 29.39s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:03<00:00, 31.53s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:46510 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38200 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49984 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45814 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45826 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45836 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45842 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45850 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45860 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45866 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45868 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45876 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45888 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45904 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34574 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34582 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34596 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34612 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [637251]
+tail: api.log: file truncated
+INFO:     Started server process [647251]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:39546 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59600 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:47<00:47, 47.02s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:05<00:00, 30.02s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:05<00:00, 32.57s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:59606 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38158 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43962 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35460 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35472 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54206 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57714 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [647251]
+tail: api.log: file truncated
+INFO:     Started server process [650610]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:38648 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38658 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:47<00:47, 47.14s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:04<00:00, 29.88s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:04<00:00, 32.47s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:59362 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59414 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45854 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [650610]
+tail: api.log: file truncated
+INFO:     Started server process [652124]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57916 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57928 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39290 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [652124]
+tail: api.log: file truncated
+INFO:     Started server process [653318]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:41410 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55298 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [653318]
+tail: api.log: file truncated
+INFO:     Started server process [654783]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56046 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56062 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [654783]
+tail: api.log: file truncated
+INFO:     Started server process [656156]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:36566 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36582 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44804 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [656156]
+tail: api.log: file truncated
+INFO:     Started server process [658423]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49256 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54018 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54026 - "POST /save_markdown HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:15<00:15, 15.72s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:33<00:00, 17.05s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:33<00:00, 16.85s/it]
+use hf model, num_thread will be set to 1
+loading pdf: /mnt/d/AIPJ/016DocAvatar/dotsocr/api/tmp/upload_658423_9125bf1c.pdf
+Parsing PDF with 5 pages using 1 threads...
+Processing PDF pages:   0%|          | 0/5 [00:00<?, ?it/s]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+/home/long/miniconda3/envs/docavatar/lib/python3.12/site-packages/transformers/utils/generic.py:965: FutureWarning: Both `num_logits_to_keep` and `logits_to_keep` are set for `DotsOCRForCausalLM.forward`. Using `logits_to_keep=1` and ignoring deprecated `num_logits_to_keep=None`.
+  output = func(self, *args, **kwargs)
+Processing PDF pages:  20%|██        | 1/5 [01:43<06:53, 103.39s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  40%|████      | 2/5 [03:12<04:45, 95.22s/it] Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  60%|██████    | 3/5 [04:02<02:28, 74.45s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages:  80%|████████  | 4/5 [04:28<00:55, 55.21s/it]Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+Processing PDF pages: 100%|██████████| 5/5 [05:03<00:00, 48.10s/it]Processing PDF pages: 100%|██████████| 5/5 [05:03<00:00, 60.77s/it]
+Parsing finished, results saving to /mnt/d/AIPJ/016DocAvatar/output_api/upload_658423_9125bf1c
+INFO:     127.0.0.1:37780 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34768 - "GET /load_user_markdown?key=98dd7575e3face87eafe431632acbff5734fa46fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34772 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43764 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43774 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [658423]
+tail: api.log: file truncated
+INFO:     Started server process [703641]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57258 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57264 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48884 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50804 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52350 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52260 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:46<00:46, 46.71s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:14<00:00, 35.79s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:14<00:00, 37.42s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:52264 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34344 - "GET /load_user_markdown?key=98dd7575e3face87eafe431632acbff5734fa46fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47384 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44928 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54684 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [703641]
+tail: api.log: file truncated
+INFO:     Started server process [706558]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:36598 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51724 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36804 - "POST /save_markdown HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:38<00:38, 38.35s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:56<00:00, 26.42s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:56<00:00, 28.21s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:59142 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52042 - "GET /load_user_markdown?key=98dd7575e3face87eafe431632acbff5734fa46fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36756 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36762 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55076 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55080 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51400 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [706558]
+tail: api.log: file truncated
+INFO:     Started server process [711164]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:59662 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59678 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:45<00:45, 45.47s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:03<00:00, 29.28s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:03<00:00, 31.71s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:37580 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60434 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60442 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44740 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44746 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44758 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [711164]
+tail: api.log: file truncated
+INFO:     Started server process [715126]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51834 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51838 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:41<00:41, 41.78s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:59<00:00, 27.45s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:59<00:00, 29.60s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:32914 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47124 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47132 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [715126]
+tail: api.log: file truncated
+INFO:     Started server process [718846]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53514 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44246 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41034 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41040 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:42<00:42, 42.07s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:00<00:00, 28.41s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:00<00:00, 30.46s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:41052 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47492 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47498 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [718846]
+tail: api.log: file truncated
+INFO:     Started server process [722114]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:36116 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33952 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33968 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55908 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55916 - "POST /save_markdown HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:39<00:39, 39.58s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:57<00:00, 26.71s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:57<00:00, 28.64s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:45046 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32970 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [722114]
+tail: api.log: file truncated
+INFO:     Started server process [726410]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53258 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53260 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33626 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56588 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:40<00:40, 40.68s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:58<00:00, 27.14s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:58<00:00, 29.17s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:56604 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54836 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fc6258e33 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54842 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [726410]
+tail: api.log: file truncated
+INFO:     Started server process [730269]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:40524 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57550 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57556 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [730269]
+tail: api.log: file truncated
+INFO:     Started server process [732341]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:46302 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34750 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:46<00:46, 46.77s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:04<00:00, 29.97s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:04<00:00, 32.49s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:34752 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33386 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fbd6bd648 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33392 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41598 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35650 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [732341]
+tail: api.log: file truncated
+INFO:     Started server process [738194]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:41454 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34976 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34982 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48856 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]tail: api.log: file truncated
+INFO:     Started server process [743191]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8080): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+tail: api.log: file truncated
+INFO:     Started server process [743923]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8080): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+tail: api.log: file truncated
+INFO:     Started server process [745840]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8080): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+tail: api.log: file truncated
+INFO:     Started server process [746870]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8080): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+tail: api.log: file truncated
+INFO:     Started server process [747910]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57814 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39220 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39226 - "GET /health HTTP/1.1" 200 OK
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [01:04<01:04, 64.09s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:20<00:00, 35.95s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:20<00:00, 40.17s/it]
+use hf model, num_thread will be set to 1
+INFO:     127.0.0.1:39230 - "POST /predict?prompt=prompt_layout_all_en&fitz_preprocess=true&mode=hf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59326 - "GET /load_user_markdown?key=b2ceb0835496cf64a479e130a222ac0984f8027fbd6bd648 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59338 - "POST /save_markdown HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [747910]

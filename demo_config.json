@@ -1,0 +1,15 @@
+{
+  "prompt_mode": "prompt_layout_all_en",
+  "inference_mode": "online",
+  "server_ip": "127.0.0.1",
+  "server_port": 8000,
+  "min_pixels": 3136,
+  "max_pixels": 11289600,
+  "fitz_preprocess": true,
+  "online_vendor": "StepFun",
+  "online_model": "step-1o-turbo-vision",
+  "online_api_key": "1HXuacnSqFL7N4vhV2xr1CzskQ4g2G7saSPlrnU4Aurz6qgL2qC7wC3OsJIzIuao8",
+  "online_base_url": "",
+  "online_cache": true,
+  "test_image_input": "/mnt/d/AIPJ/013DocAvatar/dotsocr/assets/showcase_origin/formula_2.jpg"
+}

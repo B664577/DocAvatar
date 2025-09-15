@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DotsOCR Enhanced Demo
+Comment=启动 DotsOCR 多模态文档解析演示
+Exec=/home/long/mnt/d/AIPJ/013DocAvatar/dotsocr.sh demo
+Icon=/home/long/mnt/d/AIPJ/013DocAvatar/assets/icon.png
+Terminal=true
+Categories=Development;Office;Graphics;

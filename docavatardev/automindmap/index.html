@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI增强思维导图生成器</title>
+    <link rel="stylesheet" href="styles.css?v=3">
+    <style>
+      /* Embed 模式下的布局覆盖（仅展示层，不改原样式文件） */
+      body.embed-right .left-panel { display: none !important; }
+      body.embed-right .right-panel { flex: 1 1 auto !important; width: 100vw !important; max-width: 100vw !important; }
+      body.embed-right .main-container { width: 100vw !important; }
+      body.embed-settings .right-panel { display: none !important; }
+      body.embed-settings .left-panel { flex: 1 1 auto !important; width: 100vw !important; max-width: 100vw !important; }
+      /* 带背（mem）模式：左 1/3，右 2/3 */
+      body.embed-mem .main-container { width: 100vw !important; display:flex !important; flex-direction: row !important; }
+      body.embed-mem .left-panel { display:flex !important; flex: 0 0 34vw !important; max-width: 34vw !important; min-width: 34vw !important; }
+      body.embed-mem .right-panel { display:flex !important; flex: 1 1 auto !important; width: calc(100vw - 34vw) !important; max-width: calc(100vw - 34vw) !important; }
+      /* 强制覆盖响应式：在 mem 模式下保持左右 */
+      @media (max-width: 1200px){ body.embed-mem .main-container{flex-direction:row !important;} }
+      @media (max-width: 768px){ body.embed-mem .main-container{flex-direction:row !important;} }
+    </style>
+    
+    <!-- Markmap相关依赖 - 使用CDN -->
+    <script src="https://unpkg.com/d3@6.7.0/dist/d3.min.js"></script>
+    <script src="https://unpkg.com/markmap-view@0.14.4/dist/index.min.js"></script>
+    <script src="https://unpkg.com/markmap-lib@0.14.4/dist/browser/index.min.js"></script>
+    
+    <!-- PDF.js for PDF viewing - 在 embed 模式下跳过远程 ESM 以避免 CORS -->
+    <script type="module">
+        try{
+          const qs = new URLSearchParams(location.search);
+          const isEmbed = qs.get('embed') === '1';
+          if(!isEmbed){
+            // 避免 CORS 报错：不在 dev 嵌入场景异步加载远程 ESM，统一禁用（PDF 预览非必要）
+            window.pdfjsLib = {};
+          } else {
+            window.pdfjsLib = {};
+          }
+        }catch(e){ window.pdfjsLib = {}; }
+    </script>
+    
+    <!-- html2canvas for screenshot functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+    <script>
+      // 防止外部环境误把目标源限制为 huggingface.co，统一放宽为 '*'
+      (function(){
+        try{
+          var protoPM = (window.Window && window.Window.prototype && window.Window.prototype.postMessage) ? window.Window.prototype.postMessage : null;
+          if(protoPM){
+            window.Window.prototype.postMessage = function(msg, origin, transfer){
+              try{
+                if(typeof origin === 'string' && origin.indexOf('huggingface.co') !== -1) origin = '*';
+                return protoPM.call(this, msg, origin, transfer);
+              }catch(e){ try{ return protoPM.call(this, msg, '*', transfer); }catch(_){} }
+            };
+          }
+          var _pm = window.postMessage ? window.postMessage.bind(window) : null;
+          if(_pm){
+            window.postMessage = function(msg, origin, transfer){
+              try{
+                if(typeof origin === 'string' && origin.indexOf('huggingface.co') !== -1) origin = '*';
+                return _pm(msg, origin, transfer);
+              }catch(e){ try{ return _pm(msg, '*', transfer); }catch(_){} }
+            };
+          }
+        }catch(e){}
+      })();
+      // 解析 URL 查询参数，设置嵌入模式 class
+      (function(){
+        try{
+          const qs = new URLSearchParams(location.search);
+          // 记录 automindmap 服务器基址，供跨源调用持久化接口
+          try{ window.__AM_BASE__ = (qs.get('am_base') || '').replace(/\/$/, ''); }catch(_e){}
+          if(qs.get('embed') === '1'){
+            const layout = qs.get('layout');
+            const mode = qs.get('mode');
+            if(layout === 'right-only') document.addEventListener('DOMContentLoaded', function(){ document.body.classList.add('embed-right'); });
+            if(mode === 'settings') document.addEventListener('DOMContentLoaded', function(){ document.body.classList.add('embed-settings'); });
+            if(mode === 'mem') document.addEventListener('DOMContentLoaded', function(){ document.body.classList.add('embed-mem'); });
+          }
+        }catch(e){}
+      })();
+
+      // 读取主应用透传的 mm_* 参数与 init_md，按“已有优先、可选覆盖”的策略恢复；不再无条件覆盖本地
+      (function(){
+        async function applyParams(){
+          try{
+            const qs = new URLSearchParams(location.search);
+            const skipServer = qs.get('mm_no_server') === '1';
+            const isIframe = (function(){ try{ return window.self !== window.top; }catch(_e){ return true; }})();
+            const foreignPort = (function(){ try{ var p=String(location.port||''); return !!p && p !== '5173'; }catch(_e){ return false; } })();
+            const apiBase = qs.get('mm_api_base');
+            const model = qs.get('mm_model');
+            const sys = qs.get('mm_sys');
+            const user = qs.get('mm_user');
+            const key = qs.get('mm_key');
+            const override = qs.get('mm_override') === '1';
+            const forceUpdate = qs.get('mm_force_update') === '1';
+            const initMdFromUrl = qs.get('init_md') || '';
+
+            // 先尝试从服务端恢复完整 UI 值（若未禁用，且非 iframe 场景）
+            // 但如果有force_update标志，则跳过服务端恢复，优先使用URL参数
+            try{
+              if(!skipServer && !isIframe && !foreignPort && !forceUpdate){
+              const base = (window.__AM_BASE__ || '');
+              const cfg = await fetch((base? (base + '/export-settings') : '/export-settings')).then(r=>r.ok?r.json():{}).catch(()=>({}));
+              if(cfg && cfg.ui_values){
+                Object.keys(cfg.ui_values).forEach(function(id){
+                  const el = document.getElementById(id); if(!el) return;
+                  const v = cfg.ui_values[id];
+                  if(el.type==='checkbox'||el.type==='radio'){ el.checked=!!v; } else { el.value=(v!=null?String(v):''); }
+                });
+                try{ localStorage.setItem('ui_values', JSON.stringify(cfg.ui_values)); }catch(_e){}
+              }
+              // 优先使用 ui_values 中的控件值写回 localStorage，避免顶层默认值覆盖
+              try{
+                var uiv = (cfg && cfg.ui_values) ? cfg.ui_values : {};
+                var apiBaseV = (uiv['mindmap-api-base']!=null) ? uiv['mindmap-api-base'] : (cfg ? cfg.mindmap_api_base : null);
+                var modelV = (uiv['mindmap-model-select']!=null) ? uiv['mindmap-model-select'] : (cfg ? cfg.mindmap_model : null);
+                var sysV = (uiv['mindmap-system-prompt']!=null) ? uiv['mindmap-system-prompt'] : (cfg ? cfg.mindmap_system_prompt : null);
+                var userV = (uiv['mindmap-user-prompt-template']!=null) ? uiv['mindmap-user-prompt-template'] : (cfg ? cfg.mindmap_user_prompt : null);
+                var keyV = (uiv['mindmap-api-key']!=null) ? uiv['mindmap-api-key'] : (cfg ? cfg.mindmap_api_key : null);
+                if(apiBaseV!=null) localStorage.setItem('mindmap-api-base', String(apiBaseV||''));
+                if(modelV!=null) localStorage.setItem('mindmap-model', String(modelV||''));
+                if(sysV!=null) localStorage.setItem('mindmap-system-prompt', String(sysV||''));
+                if(userV!=null) localStorage.setItem('mindmap-user-prompt-template', String(userV||''));
+                if(keyV!=null) localStorage.setItem('mindmap-api-key', String(keyV||''));
+              }catch(_e){}
+              }
+            }catch(_e){}
+
+            // 根据是否 override 或 force_update 决定是否用 URL 覆盖现有配置
+            const hasLocalModel = !!localStorage.getItem('mindmap-model');
+            if(forceUpdate || override || !hasLocalModel){
+              if(apiBase) localStorage.setItem('mindmap-api-base', apiBase);
+              if(model) localStorage.setItem('mindmap-model', model);
+              if(sys) localStorage.setItem('mindmap-system-prompt', sys);
+              if(user) localStorage.setItem('mindmap-user-prompt-template', user);
+              if(key) localStorage.setItem('mindmap-api-key', key);
+              
+              // 如果是force_update，立即应用到UI控件
+              if(forceUpdate){
+                try{
+                  if(apiBase){ const el=document.getElementById('mindmap-api-base'); if(el) el.value=apiBase; }
+                  if(model){ const el=document.getElementById('mindmap-model-select'); if(el) el.value=model; }
+                  if(sys){ const el=document.getElementById('mindmap-system-prompt'); if(el) el.value=sys; }
+                  if(user){ const el=document.getElementById('mindmap-user-prompt-template'); if(el) el.value=user; }
+                  if(key){ const el=document.getElementById('mindmap-api-key'); if(el) el.value=key; }
+                }catch(e){}
+              }
+            }
+
+            if(initMdFromUrl){ try{ localStorage.setItem('mindmap_init_md', initMdFromUrl); }catch(e){} }
+
+            // 不再强制用 localStorage 覆盖 UI，避免覆盖刚从服务器恢复的 ui_values
+          }catch(e){}
+        }
+        // 暴露到全局，供其它初始化片段安全调用（兼容 window.applyParams 与 window.__applyParams）
+        try{ window.__applyParams = applyParams; window.applyParams = applyParams; }catch(_e){}
+        // 延后到 restore 之后再调用（避免先被服务器覆盖）
+      })();
+
+      // 监听设置更改，保存到本地 server（便于主应用同步加载）
+      (function(){
+        // 收集页面上所有可持久化的表单元素值
+        function setCookie(name, value, days){
+          try{
+            var exp = new Date();
+            exp.setTime(exp.getTime() + (days||365)*24*60*60*1000);
+            document.cookie = name + '=' + encodeURIComponent(String(value||'')) + ';expires=' + exp.toUTCString() + ';path=/';
+          }catch(e){}
+        }
+        function getCookie(name){
+          try{
+            var arr = document.cookie.split(';');
+            for(var i=0;i<arr.length;i++){
+              var kv = arr[i].trim();
+              if(kv.indexOf(name+'=')===0){ return decodeURIComponent(kv.substring(name.length+1)); }
+            }
+          }catch(e){}
+          return '';
+        }
+        function collectUIValues(){
+          const map = {};
+          try{
+            const els = document.querySelectorAll('input, textarea, select');
+            els.forEach(function(el){
+              if(!el.id) return;
+              let v = null;
+              if(el.type === 'checkbox' || el.type === 'radio'){
+                v = !!el.checked;
+              }else{
+                v = el.value;
+              }
+              map[el.id] = v;
+            });
+          }catch(e){}
+          return map;
+        }
+        function applyUIValues(values){
+          try{
+            Object.keys(values||{}).forEach(function(id){
+              const el = document.getElementById(id);
+              if(!el) return;
+              const v = values[id];
+              if(el.type === 'checkbox' || el.type === 'radio'){
+                el.checked = !!v;
+              }else{
+                el.value = v != null ? String(v) : '';
+              }
+            });
+          }catch(e){}
+        }
+        function syncSettings(){
+          try{
+            const payload = {
+              mindmap_api_base: localStorage.getItem('mindmap-api-base') || '',
+              mindmap_model: document.getElementById('mindmap-model-select')?.value || localStorage.getItem('mindmap-model') || '',
+              mindmap_system_prompt: document.getElementById('mindmap-system-prompt')?.value || localStorage.getItem('mindmap-system-prompt') || '',
+              mindmap_user_prompt: document.getElementById('mindmap-user-prompt-template')?.value || localStorage.getItem('mindmap-user-prompt-template') || '',
+              mindmap_api_key: document.getElementById('mindmap-api-key')?.value || localStorage.getItem('mindmap-api-key') || '',
+              ui_values: collectUIValues()
+            };
+            // 写本地存储，保证刷新不丢；同时同步到本地服务，保证换端口/跨会话
+            try{
+              localStorage.setItem('mindmap-model', payload.mindmap_model || '');
+              if(payload.mindmap_api_base!=null) localStorage.setItem('mindmap-api-base', payload.mindmap_api_base);
+              if(payload.mindmap_system_prompt!=null) localStorage.setItem('mindmap-system-prompt', payload.mindmap_system_prompt);
+              if(payload.mindmap_user_prompt!=null) localStorage.setItem('mindmap-user-prompt-template', payload.mindmap_user_prompt);
+              if(payload.mindmap_api_key!=null) localStorage.setItem('mindmap-api-key', payload.mindmap_api_key);
+              // 保存完整的 UI 值映射
+              localStorage.setItem('ui_values', JSON.stringify(payload.ui_values||{}));
+              // 跨端口持久：写 Cookie（不同临时端口也可读）
+              setCookie('am_ui_values', JSON.stringify(payload.ui_values||{}));
+              setCookie('am_mindmap', JSON.stringify({
+                api_base: payload.mindmap_api_base||'',
+                model: payload.mindmap_model||'',
+                sys: payload.mindmap_system_prompt||'',
+                user: payload.mindmap_user_prompt||'',
+                key: payload.mindmap_api_key||''
+              }));
+            }catch(e){}
+            // 将关键字段写入 URL（mm_* 参数 + mm_override=1 + mm_force_update=1），保证刷新/代理端口变化时也能恢复
+            try{
+              const qs = new URLSearchParams(location.search);
+              qs.set('mm_api_base', payload.mindmap_api_base||'');
+              qs.set('mm_model', payload.mindmap_model||'');
+              qs.set('mm_sys', payload.mindmap_system_prompt||'');
+              qs.set('mm_user', payload.mindmap_user_prompt||'');
+              if(payload.mindmap_api_key) qs.set('mm_key', payload.mindmap_api_key); else qs.delete('mm_key');
+              qs.set('mm_override', '1');
+              qs.set('mm_force_update', '1');
+              if(!qs.get('embed')) qs.set('embed','1');
+              if(!qs.get('mode')) qs.set('mode','settings');
+              const newUrl = location.pathname + '?' + qs.toString() + location.hash;
+              history.replaceState(null, '', newUrl);
+            }catch(_e){}
+            // 同时投递到多条路径：am_base/save-settings、/save-settings（同源）、/am/save-settings（经 7860 转发）
+            try{
+              const base = (window.__AM_BASE__ || '');
+              const targets = [];
+              if(base) targets.push(base + '/save-settings');
+              targets.push('/save-settings');
+              targets.push('/am/save-settings');
+              targets.forEach(function(u){
+                try{ fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(()=>{}); }catch(_e){}
+              });
+            }catch(_e){}
+          }catch(e){}
+        }
+        function bind(){
+          const ids = ['mindmap-model-select','mindmap-api-key','mindmap-system-prompt','mindmap-user-prompt-template'];
+          ids.forEach(id=>{
+            const el = document.getElementById(id);
+            if(!el) return;
+            const evt = (el.tagName === 'SELECT') ? 'change' : 'input';
+            el.addEventListener(evt, syncSettings);
+          });
+          // 下拉模型选择时，立即写入 localStorage 并同步保存，保持与 5079 配置页一致
+          try{
+            const sel = document.getElementById('mindmap-model-select');
+            if(sel){ sel.addEventListener('change', function(){ try{ localStorage.setItem('mindmap-model', sel.value||''); }catch(_e){}; syncSettings(); }); }
+          }catch(_e){}
+          // 给所有表单元素绑定自动保存
+          try{
+            const els = document.querySelectorAll('input, textarea, select');
+            const handler = debounce(syncSettings, 200);
+            els.forEach(function(el){
+              const evt = (el.tagName === 'SELECT') ? 'change' : (el.type==='checkbox'||el.type==='radio' ? 'change' : 'input');
+              el.addEventListener(evt, handler);
+            });
+          }catch(e){}
+          // 手动保存按钮
+          try{
+            const btn = document.getElementById('save-all-settings-btn');
+            const hint = document.getElementById('save-all-hint');
+            if(btn){
+              btn.addEventListener('click', function(){
+                // 强制保存一次，并显式写入 /save-settings
+                try{
+                  const payload = {
+                    mindmap_api_base: (document.getElementById('mindmap-api-base')?.value || localStorage.getItem('mindmap-api-base') || ''),
+                    mindmap_model: (document.getElementById('mindmap-model-select')?.value || localStorage.getItem('mindmap-model') || ''),
+                    mindmap_system_prompt: (document.getElementById('mindmap-system-prompt')?.value || localStorage.getItem('mindmap-system-prompt') || ''),
+                    mindmap_user_prompt: (document.getElementById('mindmap-user-prompt-template')?.value || localStorage.getItem('mindmap-user-prompt-template') || ''),
+                    mindmap_api_key: (document.getElementById('mindmap-api-key')?.value || localStorage.getItem('mindmap-api-key') || ''),
+                    ui_values: collectUIValues()
+                  };
+                  try{ localStorage.setItem('ui_values', JSON.stringify(payload.ui_values||{})); }catch(_e){}
+                  try{ if(payload.mindmap_api_base!=null) localStorage.setItem('mindmap-api-base', payload.mindmap_api_base); }catch(_e){}
+                  try{ if(payload.mindmap_model!=null) localStorage.setItem('mindmap-model', payload.mindmap_model); }catch(_e){}
+                  try{ if(payload.mindmap_system_prompt!=null) localStorage.setItem('mindmap-system-prompt', payload.mindmap_system_prompt); }catch(_e){}
+                  try{ if(payload.mindmap_user_prompt!=null) localStorage.setItem('mindmap-user-prompt-template', payload.mindmap_user_prompt); }catch(_e){}
+                  try{ if(payload.mindmap_api_key!=null) localStorage.setItem('mindmap-api-key', payload.mindmap_api_key); }catch(_e){}
+                  const base = (window.__AM_BASE__ || '');
+                  fetch((base? (base + '/save-settings') : '/save-settings'), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) })
+                    .then(()=>{ if(hint){ hint.style.display='inline'; setTimeout(()=>{ hint.style.display='none'; }, 1200); } })
+                    .catch(()=>{ if(hint){ hint.textContent='保存失败'; hint.style.display='inline'; setTimeout(()=>{ hint.style.display='none'; hint.textContent='已保存'; }, 2000); } });
+                }catch(_e){}
+              });
+            }
+            // 单独“保存 API Base”与“保存 Key”
+            const svBase = document.getElementById('save-mindmap-api-base');
+            if(svBase){ svBase.addEventListener('click', function(){ try{ const v = document.getElementById('mindmap-api-base')?.value || ''; localStorage.setItem('mindmap-api-base', v); const base=(window.__AM_BASE__||''); fetch((base? (base + '/save-settings') : '/save-settings'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mindmap_api_base:v,ui_values:collectUIValues()})}); }catch(_e){} }); }
+            const svKey = document.getElementById('save-mindmap-api-key');
+            if(svKey){ svKey.addEventListener('click', function(){ try{ const v = document.getElementById('mindmap-api-key')?.value || ''; localStorage.setItem('mindmap-api-key', v); const base=(window.__AM_BASE__||''); fetch((base? (base + '/save-settings') : '/save-settings'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mindmap_api_key:v,ui_values:collectUIValues()})}); }catch(_e){} }); }
+          }catch(e){}
+        }
+        // 恢复 UI 值：优先本地 ui_values，然后用服务器 ui_values 仅补空，不覆盖已有值；最后应用 URL mm_* 覆盖
+        function restore(){
+          try{
+            // 1) 恢复策略：
+            // - 非 embed 场景：Cookie → 本地 ui_values（保持原行为，兼容独立访问）
+            // - embed 场景：跳过 Cookie 与本地 ui_values，避免旧值覆盖 7860 推送的服务器配置
+            try{
+              const isEmbed = (function(){ try{ return (new URLSearchParams(location.search)).get('embed')==='1'; }catch(_e){ return false; } })();
+              if(!isEmbed){
+                try{ const c = getCookie('am_ui_values'); if(c){ const v = JSON.parse(c||'{}'); applyUIValues(v); } }catch(_e){}
+                try{ const local = JSON.parse(localStorage.getItem('ui_values')||'{}'); applyUIValues(local); }catch(_e){}
+              }
+            }catch(_e){}
+
+            // 同步 Cookie 中的核心 mindmap 字段到 localStorage 与 UI
+            try{
+              const coreStr = getCookie('am_mindmap');
+              if(coreStr){
+                const core = JSON.parse(coreStr||'{}');
+                if(core.api_base!=null){ localStorage.setItem('mindmap-api-base', core.api_base||''); var el=document.getElementById('mindmap-api-base'); if(el && !el.value) el.value = core.api_base||''; }
+                if(core.model!=null){ localStorage.setItem('mindmap-model', core.model||''); var m=document.getElementById('mindmap-model-select'); if(m && !m.value) m.value = core.model||''; }
+                if(core.sys!=null){ localStorage.setItem('mindmap-system-prompt', core.sys||''); var s=document.getElementById('mindmap-system-prompt'); if(s && !s.value) s.value = core.sys||''; }
+                if(core.user!=null){ localStorage.setItem('mindmap-user-prompt-template', core.user||''); var u=document.getElementById('mindmap-user-prompt-template'); if(u && !u.value) u.value = core.user||''; }
+                if(core.key!=null){ localStorage.setItem('mindmap-api-key', core.key||''); var k=document.getElementById('mindmap-api-key'); if(k && !k.value) k.value = core.key||''; }
+              }
+            }catch(_e){}
+
+            // 2) 再从服务器读取，仅补空（不覆盖已存在值）
+            function applyIfEmpty(values){
+              try{
+                Object.keys(values||{}).forEach(function(id){
+                  var el = document.getElementById(id); if(!el) return;
+                  var cur = (el.type==='checkbox'||el.type==='radio') ? (el.checked? '1':'' ) : (el.value||'');
+                  if(!cur){
+                    var v = values[id];
+                    if(el.type==='checkbox'||el.type==='radio'){ el.checked = !!v; } else { el.value = (v!=null? String(v):''); }
+                  }
+                });
+              }catch(_e){}
+            }
+            const base = (window.__AM_BASE__ || '');
+            // 在force_update模式下，跳过服务器配置加载，避免覆盖URL参数传递的配置
+            const forceUpdateCheck = (function(){ try{ return (new URLSearchParams(location.search)).get('mm_force_update')==='1'; }catch(_e){ return false; } })();
+            if(!forceUpdateCheck){
+              fetch((base? (base + '/export-settings') : '/export-settings')).then(r=>r.ok?r.json():null).then(cfg=>{
+                const serverUI = (cfg && cfg.ui_values) ? cfg.ui_values : null;
+                try{
+                  const isEmbed = (function(){ try{ return (new URLSearchParams(location.search)).get('embed')==='1'; }catch(_e){ return false; } })();
+                  if(serverUI){
+                    // 在 embed 场景下，无条件应用服务器 ui_values（7860 已预先推送最新配置）
+                    // 非 embed 场景沿用"仅补空"的温和策略
+                    if(isEmbed){ applyUIValues(serverUI); }
+                    else { applyIfEmpty(serverUI); }
+                  }
+                }catch(_e){ if(serverUI) applyIfEmpty(serverUI); }
+              // 将关键 mindmap 字段同步回 localStorage，以供 mem 模式使用
+              try{
+                const mSel = document.getElementById('mindmap-model-select'); if(mSel) localStorage.setItem('mindmap-model', mSel.value||'');
+                const mKey = document.getElementById('mindmap-api-key'); if(mKey) localStorage.setItem('mindmap-api-key', mKey.value||'');
+                const mSys = document.getElementById('mindmap-system-prompt'); if(mSys) localStorage.setItem('mindmap-system-prompt', mSys.value||'');
+                const mUser = document.getElementById('mindmap-user-prompt-template'); if(mUser) localStorage.setItem('mindmap-user-prompt-template', mUser.value||'');
+              }catch(_e){}
+            }).catch(()=>{});
+            }
+
+            // 3) 最后应用 URL 覆盖（mm_override=1 或 mm_force_update=1）
+            try{
+              const qs = new URLSearchParams(location.search);
+              const override = qs.get('mm_override') === '1';
+              const forceUpdate2 = qs.get('mm_force_update') === '1';
+              if(override || forceUpdate2){
+                const apiBase = qs.get('mm_api_base');
+                const model = qs.get('mm_model');
+                const sys = qs.get('mm_sys');
+                const user = qs.get('mm_user');
+                const key = qs.get('mm_key');
+                if(apiBase!=null){ const el=document.getElementById('mindmap-api-base'); if(el) el.value=apiBase; localStorage.setItem('mindmap-api-base', apiBase); }
+                if(model!=null){ const el=document.getElementById('mindmap-model-select'); if(el) el.value=model; localStorage.setItem('mindmap-model', model); }
+                if(sys!=null){ const el=document.getElementById('mindmap-system-prompt'); if(el) el.value=sys; localStorage.setItem('mindmap-system-prompt', sys); }
+                if(user!=null){ const el=document.getElementById('mindmap-user-prompt-template'); if(el) el.value=user; localStorage.setItem('mindmap-user-prompt-template', user); }
+                if(key!=null){ const el=document.getElementById('mindmap-api-key'); if(el) el.value=key; localStorage.setItem('mindmap-api-key', key); }
+              }
+            }catch(_ee){}
+          }catch(e){}
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+          try{ restore(); }catch(_e){}
+          try{ bind(); }catch(_e){}
+          try{ (window.applyParams||window.__applyParams||function(){})(); }catch(_e){}
+          try{
+            var isEmbed = (new URLSearchParams(location.search)).get('embed')==='1';
+            if(!isEmbed){ setTimeout(syncSettings, 400); }
+          }catch(_e){ setTimeout(syncSettings, 400); }
+        });
+      })();
+
+      // 带背模式：分块、缓存、面板与注入（满足“最深标题为边界；图片base64仅展示不入参；断点续跑”）
+      (function(){
+        const qs = new URLSearchParams(location.search);
+        if(!(qs.get('embed')==='1' && qs.get('mode')==='mem')) return;
+        function stripBase64Imgs(md){
+          try{ return md.replace(/!\[[^\]]*\]\(data:image\/[\w+\-.]+;base64,[^)]+\)/g,''); }catch(e){ return md; }
+        }
+        // 若收到的是折叠HTML（<summary><span class="hN">），将其转换成标准 Markdown（# 标题）
+        function htmlFoldToMarkdown(txt){
+          if(!txt || typeof txt!=='string') return '';
+          if(!/<summary[^>]*>\s*<span class=\"h\d\">/i.test(txt)) return txt; // 非折叠HTML直接返回
+          try{
+            // 提取所有 summary 标题，转为 #、##、###
+            let md = txt
+              .replace(/<summary[^>]*>\s*<span class=\"h1\">([\s\S]*?)<\/span>\s*<\/summary>/gi, function(_m,t){return '\n# '+t.replace(/<[^>]+>/g,'').trim()+'\n';})
+              .replace(/<summary[^>]*>\s*<span class=\"h2\">([\s\S]*?)<\/span>\s*<\/summary>/gi, function(_m,t){return '\n## '+t.replace(/<[^>]+>/g,'').trim()+'\n';})
+              .replace(/<summary[^>]*>\s*<span class=\"h3\">([\s\S]*?)<\/span>\s*<\/summary>/gi, function(_m,t){return '\n### '+t.replace(/<[^>]+>/g,'').trim()+'\n';})
+              .replace(/<summary[^>]*>\s*<span class=\"h(\d)\">([\s\S]*?)<\/span>\s*<\/summary>/gi, function(_m,l,t){var n=parseInt(l,10)||4; return '\n'+('#'.repeat(Math.min(Math.max(n,1),6)))+' '+String(t).replace(/<[^>]+>/g,'').trim()+'\n';});
+            // 去掉剩余 details/summary 外壳与多余标签
+            md = md.replace(/<\/?details[^>]*>/gi,'').replace(/<[^>]+>/g,'');
+            return md;
+          }catch(e){ return txt; }
+        }
+        function detectDeepestLevel(lines){
+          let inCode=false,deep=0; for(const L of lines){
+            if(/^```/.test(L)){ inCode=!inCode; continue; }
+            if(inCode) continue; const m=/^(#{1,6})\s+/.exec(L); if(m){ const lv=m[1].length; if(lv>deep) deep=lv; }
+          } return deep;
+        }
+        function splitByDeepest(md){
+          // 兼容：若是折叠HTML，先转换为标准Markdown
+          md = htmlFoldToMarkdown(md);
+          const lines = md.split(/\r?\n/);
+          const segs = [];
+          let buf = [];
+          let inCode = false;
+          let started = false; // 是否已进入一个段的范围（通常遇到第一个标题后）
+          let seenBody = false; // 自上一次“开始/切段”以来是否出现过正文（非标题、非空、非代码围栏）
+
+          function isHeading(l){ return /^#{1,6}\s+/.test(l); }
+          function isFence(l){ return /^```/.test(l); }
+          function isNonEmpty(l){ return /\S/.test(l); }
+          function flush(){ if(buf.length){ segs.push(buf.join('\n').trim()); buf = []; } started = false; seenBody = false; }
+
+          for(let i=0;i<lines.length;i++){
+            const L = lines[i];
+            if(isFence(L)){
+              inCode = !inCode; buf.push(L); if(!started) started = true; if(inCode===true) seenBody = true; continue;
+            }
+            if(!inCode && isHeading(L)){
+              if(started && seenBody){ flush(); }
+              // 仍处于“标题连续区间”或刚开始一个新段
+              buf.push(L);
+              started = true;
+              continue;
+            }
+            // 非标题行
+            buf.push(L);
+            if(isNonEmpty(L)) { started = true; if(!/^\s*$/.test(L)) seenBody = true; }
+          }
+          flush();
+          // 如果没有任何段且原文非空，回退为整篇
+          if(segs.length===0 && md.trim()) return [md.trim()];
+          return segs.filter(Boolean);
+        }
+        function fnv1a(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0; } return ('00000000'+(h>>>0).toString(16)).slice(-8); }
+        let rawMd=''; let segs=[]; let idx=0; let docHash='';
+        function save(){ try{ localStorage.setItem('mem_progress:'+docHash, JSON.stringify({ nextIndex: idx, total: segs.length, ts: Date.now(), ver:1 })); }catch(e){} }
+        function load(){ try{ return JSON.parse(localStorage.getItem('mem_progress:'+docHash)||'{}'); }catch(e){ return {}; } }
+        function renderPanel(){
+          const left = document.querySelector('.left-panel'); if(!left) return;
+          // 隐藏原左侧复杂模块，避免干扰；不删除以防其他脚本绑定时报错
+          try{ const hideSel=['.folder-processor-section','.ai-config-section','.content-viewer-section']; hideSel.forEach(s=>left.querySelectorAll(s).forEach(e=>{ e.style.display='none'; })); }catch(e){}
+          let wrap = left.querySelector('.mem-panel'); if(!wrap){ wrap = document.createElement('div'); wrap.className='mem-panel'; left.appendChild(wrap); }
+          wrap.innerHTML = '<div class="config-header"><h3>Markdown 编辑器</h3></div>'+
+            '<div style="padding:10px;display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;align-items:center">'+
+            '<button id="mem-start" class="primary-btn">开始</button>'+
+            '<button id="mem-resume" class="secondary-btn">继续</button>'+
+            '<span id="mem-docname" style="font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">未加载MD</span>'+
+            '<button id="mem-choose" class="secondary-btn">打开MD文件</button>'+
+            '<input id="mem-file" type="file" accept=".md,.markdown,.txt" style="display:none" />'+
+            '</div>'+
+            '<div id="mem-preview" class="markdown-sync-display" style="margin:8px"></div>'+
+            '<div style="padding:6px 10px;color:#666;font-size:12px"><span id="mem-prog">未开始</span></div>';
+          left.style.display='flex'; left.style.visibility='visible';
+          // 兜底：尝试从本地服务读取 mindmap_init_md（父页保存）
+          try{
+            const base = (window.__AM_BASE__ || '');
+            fetch((base? (base + '/export-settings') : '/export-settings')).then(r=>r.ok?r.json():null).then(cfg=>{
+              if(!rawMd && cfg && cfg.mindmap_init_md){
+                rawMd = String(cfg.mindmap_init_md||'');
+                docHash = fnv1a(rawMd);
+                const tmp=splitByDeepest(rawMd); segs=tmp; idx=0;
+                const pv=document.getElementById('mem-preview'); if(pv) pv.innerHTML=(function(md){ try{ const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); let h=esc(md); h=h.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,function(_m,a,s){ if(/^data:image\//.test(s)||/^https?:\/\//.test(s)){ return '<div style=\"margin:6px 0\"><img alt=\"'+esc(a||'')+'\" src=\"'+s+'\" style=\"max-width:100%\"/></div>'; } return _m;}); return h; }catch(_e){ return md; }})(tmp[0]||'');
+                const pg=document.getElementById('mem-prog'); if(pg) pg.textContent=tmp.length?('就绪 1/'+tmp.length):'就绪';
+              }
+            }).catch(()=>{});
+          }catch(e){}
+          document.getElementById('mem-choose').onclick=()=>document.getElementById('mem-file').click();
+          document.getElementById('mem-file').addEventListener('change',e=>{
+            const f=e.target.files&&e.target.files[0]; if(!f) return; document.getElementById('mem-docname').textContent=f.name;
+            const r=new FileReader(); r.onload=()=>{ rawMd=String(r.result||''); docHash=fnv1a(rawMd); const tmp=splitByDeepest(rawMd); segs=tmp; idx=0; document.getElementById('mem-preview').innerHTML=(function(md){ try{ const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); let h=esc(md); h=h.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,function(_m,a,s){ if(/^data:image\//.test(s)||/^https?:\/\//.test(s)){ return '<div style=\"margin:6px 0\"><img alt=\"'+esc(a||'')+'\" src=\"'+s+'\" style=\"max-width:100%\"/></div>'; } return _m;}); return h; }catch(_e){ return md; }})(tmp[0]||''); document.getElementById('mem-prog').textContent = tmp.length?('就绪 1/'+tmp.length):'就绪'; save(); }; r.readAsText(f,'utf-8');
+          });
+          document.getElementById('mem-start').onclick=()=>{ if(!rawMd){ document.getElementById('mem-prog').textContent='请先加载MD'; return; } segs=splitByDeepest(rawMd); idx=0; push(); };
+          document.getElementById('mem-resume').onclick=()=>{ if(!rawMd){ document.getElementById('mem-prog').textContent='请先加载MD'; return; } segs=splitByDeepest(rawMd); const p=load(); idx=Math.min((p&&p.nextIndex!=null)?p.nextIndex:0, segs.length-1); push(); };
+        }
+        async function push(){
+          if(!segs.length) return;
+          const ta = document.getElementById('markdown-input');
+          const text = stripBase64Imgs(segs[idx]||'');
+          // 仅把分段文本放入右侧输入；思维导图 API 调用交由右侧逻辑按本地/7860设置执行
+          if(ta){ ta.value = text; }
+          try{ window.__mem_pre_api = false; }catch(_e){}
+          // 改为触发右侧“朗读内容”（generate-btn），确保走统一读取/ack链路；同时触发 input 事件使脚本感知变更
+          try{ if(ta){ const evt = new Event('input', { bubbles:true }); ta.dispatchEvent(evt); } }catch(_e){}
+          const genBtn = document.getElementById('generate-btn'); if(genBtn){ genBtn.click(); } else { const readBtn = document.getElementById('read-markdown-btn'); if(readBtn){ readBtn.click(); } }
+          document.getElementById('mem-preview').innerHTML = (function(md){
+            try{ const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); let h=esc(md); h=h.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,function(_m,a,s){ if(/^data:image\//.test(s)||/^https?:\/\//.test(s)){ return '<div style="margin:6px 0"><img alt="'+esc(a||'')+'" src="'+s+'" style="max-width:100%"/></div>'; } return _m;}); return h; }catch(_e){ return md; }
+          })(segs[idx]||'');
+          document.getElementById('mem-prog').textContent = `进度 ${idx+1}/${segs.length}`;
+          save();
+        }
+        window.addEventListener('message',ev=>{ const d=ev.data||{}; if(d.type==='mem-set-md'){ rawMd = String(d.text||''); docHash = fnv1a(rawMd); const tmp=splitByDeepest(rawMd); segs=tmp; idx=0; const left=document.querySelector('.left-panel'); if(left && !left.querySelector('.mem-panel')) renderPanel(); const pv=document.getElementById('mem-preview'); if(pv) pv.innerHTML = (function(md){ try{ const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); let h=esc(md); h=h.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,function(_m,a,s){ if(/^data:image\//.test(s)||/^https?:\/\//.test(s)){ return '<div style=\"margin:6px 0\"><img alt=\"'+esc(a||'')+'\" src=\"'+s+'\" style=\"max-width:100%\"/></div>'; } return _m;}); return h; }catch(_e){ return md; }})(tmp[0]||''); const pg=document.getElementById('mem-prog'); if(pg) pg.textContent = tmp.length?('就绪 1/'+tmp.length):'就绪'; }
+          // ack 由右侧API完成后发送，这里只负责推进
+          else if(d.type==='mem-ack'){ idx = Math.min(idx+1, segs.length); if(idx<segs.length) { push(); } else { const pg=document.getElementById('mem-prog'); if(pg) pg.textContent = `已完成 ${segs.length}/${segs.length}`; save(); } }
+          else if(d.type==='mem-begin'){
+            // 外部触发开始/继续
+            try{
+              if(!rawMd){ const pv=document.getElementById('mem-preview'); if(pv) pv.textContent='未加载MD'; return; }
+              segs = splitByDeepest(rawMd);
+              const p = load();
+              idx = Math.min((p&&p.nextIndex!=null)?p.nextIndex:0, segs.length-1);
+              push();
+            }catch(_e){}
+          }
+        });
+        document.addEventListener('DOMContentLoaded', function(){ renderPanel(); try{ var localInit = localStorage.getItem('mindmap_init_md')||''; if(localInit && !rawMd){ rawMd = String(localInit); docHash = fnv1a(rawMd); const tmp=splitByDeepest(rawMd); segs=tmp; idx=0; const pv=document.getElementById('mem-preview'); if(pv) pv.textContent=tmp[0]||''; const pg=document.getElementById('mem-prog'); if(pg) pg.textContent=tmp.length?('就绪 1/'+tmp.length):'就绪'; } }catch(e){} });
+      })();
+
+      // 接收主应用发送的分段文本，写入右侧输入；不在这里 ack，由右侧 API 完成后 ack
+      (function(){
+        function onMsg(ev){
+          try{
+            const d = ev.data || {};
+            if(d.type === 'mem-segment'){
+              // 将文本写入 markdown 输入框
+              const ta = document.getElementById('markdown-input');
+              if(ta){ ta.value = d.text || ''; }
+              // 触发导图刷新按钮
+              const btn = document.getElementById('generate-btn');
+              if(btn){ btn.click(); }
+              // 注意：ack 改为在 script.js 中 API 成功后发送
+            }
+            else if(d.type === 'mem-set-config'){
+              // 从父页接收配置，应用到 UI 与 localStorage，并持久化到本地服务
+              try{
+                const cfg = d.cfg || {};
+                const apiBase = (cfg.api_base != null) ? String(cfg.api_base) : null;
+                const model = (cfg.model != null) ? String(cfg.model) : null;
+                const sys   = (cfg.sys   != null) ? String(cfg.sys)   : null;
+                const user  = (cfg.user  != null) ? String(cfg.user)  : null;
+                const key   = (cfg.key   != null) ? String(cfg.key)   : null;
+                // 写 UI
+                try{ var el=document.getElementById('mindmap-api-base'); if(el && apiBase!=null){ el.value=apiBase; } }catch(_e){}
+                try{ var el=document.getElementById('mindmap-model-select'); if(el && model!=null){ el.value=model; } }catch(_e){}
+                try{ var el=document.getElementById('mindmap-system-prompt'); if(el && sys!=null){ el.value=sys; } }catch(_e){}
+                try{ var el=document.getElementById('mindmap-user-prompt-template'); if(el && user!=null){ el.value=user; } }catch(_e){}
+                try{ var el=document.getElementById('mindmap-api-key'); if(el && key!=null){ el.value=key; } }catch(_e){}
+                // 写 localStorage
+                try{ if(apiBase!=null) localStorage.setItem('mindmap-api-base', apiBase); }catch(_e){}
+                try{ if(model!=null) localStorage.setItem('mindmap-model', model); }catch(_e){}
+                try{ if(sys!=null) localStorage.setItem('mindmap-system-prompt', sys); }catch(_e){}
+                try{ if(user!=null) localStorage.setItem('mindmap-user-prompt-template', user); }catch(_e){}
+                try{ if(key!=null) localStorage.setItem('mindmap-api-key', key); }catch(_e){}
+                // 持久化到服务端（同源 preferred）
+                try{
+                  const base = (window.__AM_BASE__ || '');
+                  const payload = {
+                    mindmap_api_base: apiBase!=null?apiBase:'',
+                    mindmap_model: model!=null?model:'',
+                    mindmap_system_prompt: sys!=null?sys:'',
+                    mindmap_user_prompt: user!=null?user:'',
+                    mindmap_api_key: key!=null?key:'',
+                    ui_values: {
+                      'mindmap-api-base': apiBase!=null?apiBase:'',
+                      'mindmap-model-select': model!=null?model:'',
+                      'mindmap-system-prompt': sys!=null?sys:'',
+                      'mindmap-user-prompt-template': user!=null?user:'',
+                      'mindmap-api-key': key!=null?key:''
+                    }
+                  };
+                  fetch((base? (base + '/save-settings') : '/save-settings'),{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }).catch(()=>{});
+                }catch(_e){}
+              }catch(_ee){}
+            }
+          }catch(e){}
+        }
+        // 放宽 postMessage 来源限制，兼容代理/不同源嵌入
+        try{
+          window.addEventListener('message', function(ev){ try{ onMsg(ev); }catch(_e){} }, false);
+        }catch(_e){ window.addEventListener('message', onMsg, false); }
+        // 兼容 huggingface 代理：强制接受来自任何源的注入（父页已做了安全校验）
+        try{
+          const origPM = window.postMessage.bind(window);
+          window.postMessage = function(msg, origin){ return origPM(msg, '*'); };
+        }catch(e){}
+      })();
+    </script>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 左侧面板 -->
+        <div class="left-panel">
+            <!-- 文件夹处理器 -->
+            <div class="folder-processor-section">
+                <div class="config-header">
+                    <h3>📁 文件夹处理器</h3>
+                    <button id="toggle-folder-config-btn" class="toggle-btn">展开配置</button>
+                </div>
+                <div class="folder-config-content" id="folder-config-content">
+                    <!-- 视觉识别模型配置 -->
+                    <div class="model-config-group">
+                        <h4>视觉识别模型</h4>
+                        <div class="model-selection">
+                            <label for="vision-model-select">选择视觉模型：</label>
+                            <select id="vision-model-select">
+                                <option value="step-1o-turbo-vision">阶跃星辰 1o Turbo Vision</option>
+                                <option value="gpt-4-vision">GPT-4 Vision</option>
+                                <option value="claude-vision">Claude Vision</option>
+                            </select>
+                        </div>
+                        <div class="api-config">
+                            <label for="vision-api-key">视觉模型API密钥：</label>
+                            <div class="api-key-container">
+                                <input type="password" id="vision-api-key" placeholder="输入视觉模型API密钥..." class="api-input">
+                                <button id="toggle-vision-api-visibility" class="visibility-btn">👁️</button>
+                                <button id="save-vision-api-key" class="save-btn">保存</button>
+                            </div>
+                        </div>
+                        <div class="prompt-config">
+                            <label for="vision-system-prompt">视觉模型系统提示词：</label>
+                            <textarea id="vision-system-prompt" placeholder="请输入视觉模型的系统提示词..." rows="3">你是一位专业的视觉内容分析专家，请详细描述图片或PDF中的内容，包括文字、图表、结构、关键信息等。</textarea>
+                            
+                            <label for="vision-user-prompt-template">视觉模型用户提示词模板：</label>
+                            <textarea id="vision-user-prompt-template" placeholder="请输入视觉模型的用户提示词模板..." rows="2">请详细分析这张图片/PDF的内容，提取所有文字和关键信息。</textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- 思维导图生成模型配置 -->
+                    <div class="model-config-group">
+                        <h4>思维导图生成模型</h4>
+                        <div class="model-selection">
+                            <label for="mindmap-model-select">选择思维导图模型：</label>
+                            <select id="mindmap-model-select">
+                                <option value="kimi-k2-0711-preview">kimi-k2-0711-preview</option>
+                                <option value="qwen">通义千问 (Qwen)</option>
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-3.5">GPT-3.5 Turbo</option>
+                                <option value="claude">Claude</option>
+                                <option value="gemini">Gemini</option>
+                            </select>
+                        </div>
+                        <div class="api-config">
+                            <label for="mindmap-api-key">思维导图模型API密钥：</label>
+                            <div class="api-key-container">
+                                <input type="password" id="mindmap-api-key" placeholder="输入思维导图模型API密钥..." class="api-input">
+                                <button id="toggle-mindmap-api-visibility" class="visibility-btn">👁️</button>
+                                <button id="save-mindmap-api-key" class="save-btn">保存</button>
+                            </div>
+                        </div>
+                        <div class="api-config">
+                            <label for="mindmap-api-base">API Base：</label>
+                            <div class="api-key-container">
+                                <input type="text" id="mindmap-api-base" placeholder="如 https://api.moonshot.cn 或网关地址" class="api-input">
+                                <button id="save-mindmap-api-base" class="save-btn">保存</button>
+                            </div>
+                        </div>
+                        <div class="prompt-config">
+                            <label for="mindmap-system-prompt">思维导图模型系统提示词：</label>
+                            <textarea id="mindmap-system-prompt" placeholder="请输入思维导图模型的系统提示词..." rows="4">你是一位专业的内容分析和思维导图生成专家。请根据用户提供的内容，生成一个结构清晰、层次分明的思维导图。使用Markdown格式，以中心主题开始，逐步展开分支主题，每个主题都要简洁明了。使用适当的层级结构（#、##、###等）来表示思维导图的层次关系。确保内容逻辑清晰，重点突出，便于理解和记忆。</textarea>
+                            
+                            <label for="mindmap-user-prompt-template">思维导图模型用户提示词模板：</label>
+                            <textarea id="mindmap-user-prompt-template" placeholder="请输入思维导图模型的用户提示词模板..." rows="3">请根据以下内容生成一个结构化的思维导图：{content}</textarea>
+                            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+                              <button id="save-all-settings-btn" class="save-btn">保存配置</button>
+                              <span id="save-all-hint" style="font-size:12px;color:#666;display:none;">已保存</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文件夹选择 -->
+                    <div class="folder-selection">
+                        <label for="folder-input">选择文件夹：</label>
+                        <input type="file" id="folder-input" webkitdirectory directory multiple accept="image/*,application/pdf" style="display: none;">
+                        <button id="select-folder-btn" class="primary-btn">📁 选择文件夹</button>
+                        <span id="selected-folder-name" style="margin-left: 10px; color: #666;"></span>
+                    </div>
+                    
+                    <!-- 处理进度 -->
+                    <div class="processing-progress" id="processing-progress" style="display: none;">
+                        <div class="progress-info">
+                            <span id="current-file-name">准备处理...</span>
+                            <span id="progress-counter">0/0</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="processing-status" id="processing-status">等待开始...</div>
+                    </div>
+                    
+                    <!-- 视觉模型返回结果 -->
+                    <div class="vision-result-section">
+                        <h4>视觉模型返回结果</h4>
+                        <textarea id="vision-result-display" class="vision-result-display" placeholder="处理完成后，视觉模型的返回结果将显示在这里..." rows="8" readonly></textarea>
+                    </div>
+                    
+                    <!-- 固定朗读内容配置 -->
+                    <div class="model-config-group">
+                        <h4>固定朗读内容</h4>
+                        <div class="prompt-config">
+                            <label for="fixed-reading-text">每文件朗读结束后朗读的内容：</label>
+                            <textarea id="fixed-reading-text" placeholder="请输入朗读内容..." rows="3">本直播间仅为医学考研直播，非医疗行为。</textarea>
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="enable-fixed-reading" checked>
+                                <label for="enable-fixed-reading">启用固定朗读</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 敏感词过滤配置 -->
+                    <div class="model-config-group">
+                        <h4>敏感词过滤</h4>
+                        <div style="background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin-bottom: 15px; border-radius: 4px;">
+                            <strong>⚠️ 重要提示：</strong> 如需使用敏感词过滤功能，请先在下方配置API密钥！<br>
+                            <small>请到 <a href="https://check51.cn" target="_blank" style="color: #007bff;">check51.cn</a> 注册获取AppID和密钥</small>
+                        </div>
+                        <div class="checkbox-option">
+                            <input type="checkbox" id="enable-sensitive-filter" checked>
+                            <label for="enable-sensitive-filter">启用敏感词过滤</label>
+                        </div>
+                        <div class="radio-group" style="margin-left: 20px; margin-top: 5px;">
+                            <label><input type="radio" name="sensitive-filter-mode" value="voice-only" checked> 仅语音消音（文字显示完整）</label>
+                            <label><input type="radio" name="sensitive-filter-mode" value="both"> 文字和语音都拦截</label>
+                        </div>
+                        <div class="api-config">
+                            <label for="banned-words-appid">违禁词检测AppID：</label>
+                            <div class="api-key-container">
+                                <input type="text" id="banned-words-appid" placeholder="输入违禁词检测AppID..." class="api-input">
+                            </div>
+                        </div>
+                        <div class="api-config">
+                            <label for="banned-words-secret">违禁词检测密钥：</label>
+                            <div class="api-key-container">
+                                <input type="password" id="banned-words-secret" placeholder="输入违禁词检测密钥..." class="api-input">
+                                <button id="toggle-banned-words-secret" class="visibility-btn">👁️</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 行业选择 -->
+                        <div class="filter-options">
+                            <label>拦截行业（多选）：</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" class="industry-filter" value="医疗" checked> 医疗</label>
+                                <label><input type="checkbox" class="industry-filter" value="金融" checked> 金融</label>
+                                <label><input type="checkbox" class="industry-filter" value="教育" checked> 教育</label>
+                                <label><input type="checkbox" class="industry-filter" value="法律" checked> 法律</label>
+                                <label><input type="checkbox" class="industry-filter" value="政治" checked> 政治</label>
+                                <label><input type="checkbox" class="industry-filter" value="宗教" checked> 宗教</label>
+                                <label><input type="checkbox" class="industry-filter" value="博彩" checked> 博彩</label>
+                                <label><input type="checkbox" class="industry-filter" value="成人" checked> 成人</label>
+                            </div>
+                        </div>
+                        
+                        <!-- 平台选择 -->
+                        <div class="filter-options">
+                            <label>拦截平台（多选）：</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" class="platform-filter" value="抖音" checked> 抖音</label>
+                                <label><input type="checkbox" class="platform-filter" value="快手" checked> 快手</label>
+                                <label><input type="checkbox" class="platform-filter" value="微信" checked> 微信</label>
+                                <label><input type="checkbox" class="platform-filter" value="微博" checked> 微博</label>
+                                <label><input type="checkbox" class="platform-filter" value="小红书" checked> 小红书</label>
+                                <label><input type="checkbox" class="platform-filter" value="B站" checked> B站</label>
+                                <label><input type="checkbox" class="platform-filter" value="知乎" checked> 知乎</label>
+                                <label><input type="checkbox" class="platform-filter" value="淘宝" checked> 淘宝</label>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    
+                    <!-- 文件夹处理操作 -->
+                    <div class="folder-actions">
+                        <button id="start-folder-processing" class="primary-btn" disabled>🚀 开始处理</button>
+                        <button id="pause-folder-processing" class="secondary-btn" disabled>⏸️ 暂停</button>
+                        <button id="stop-folder-processing" class="secondary-btn" disabled>⏹️ 停止</button>
+                    </div>
+                </div>
+            </div>
+            
+
+        </div>
+        
+        <!-- 右侧面板 -->
+        <div class="right-panel">
+            <!-- Markdown编辑区域 (上1/2) -->
+            <div class="markdown-section">
+                <div class="markdown-header">
+                    <h3>Markdown 编辑器</h3>
+                    <div class="markdown-controls">
+                        <div class="input-options">
+                            <div class="option-item">
+                                <input type="checkbox" id="typing-effect" checked>
+                                <label for="typing-effect">朗读时使用打字机效果</label>
+                            </div>
+                        </div>
+                        
+                        <div class="voice-settings">
+                            <div class="voice-option">
+                                <label for="voice-select">语音选择：</label>
+                                <select id="voice-select">
+                                    <option value="default">浏览器默认语音</option>
+                                </select>
+                            </div>
+                            <div class="voice-option">
+                                <label for="voice-speed">语速：</label>
+                                <input type="range" id="voice-speed" min="0.5" max="2" step="0.1" value="1">
+                                <span id="speed-value">1.0</span>
+                            </div>
+                            <div class="voice-option">
+                                <label for="voice-volume">音量：</label>
+                                <input type="range" id="voice-volume" min="0" max="1" step="0.1" value="1">
+                                <span id="volume-value">1.0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="buttons" style="display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:auto;gap:8px;">
+                            <button id="generate-btn">朗读内容</button>
+                            <button id="copy-btn">复制内容</button>
+                            <button id="clear-btn">清空内容</button>
+                            <button id="toggle-mindmap-btn">隐藏导图</button>
+                            <button id="read-markdown-btn">朗读原文</button>
+                            <button id="download-btn">下载结果</button>
+                            <button id="download-all-btn">合并下载</button>
+                            <button id="download-vision-btn">合并下载原始视觉</button>
+                        </div>
+                    </div>
+                </div>
+                <textarea id="markdown-input" placeholder="在此输入或编辑Markdown文本..."></textarea>
+            </div>
+            
+            <!-- 新增：Markdown 同步展示区域 -->
+            <div id="markdown-sync-display" class="markdown-sync-display"></div>
+            
+            <!-- 思维导图区域 (下1/2) -->
+            <div class="mindmap-section">
+                <div class="mindmap-header">
+                    <h3>思维导图预览</h3>
+                </div>
+                <div id="mindmap-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+      // 在 embed-settings 模式下，只保留“视觉识别模型 / 思维导图生成模型”两块
+      (function(){
+        function run(){
+          if(!document.body.classList.contains('embed-settings')) return;
+          try{
+            const fps = document.querySelector('.folder-processor-section');
+            if(!fps) return;
+            const container = document.getElementById('folder-config-content') || fps;
+            // 隐藏非目标的所有块
+            container.querySelectorAll('.model-config-group').forEach(function(g){
+              const h = (g.querySelector('h4') && g.querySelector('h4').textContent) || '';
+              if(!/视觉识别模型|思维导图生成模型/.test(h)){
+                g.style.display = 'none';
+              }
+            });
+            const toHide = ['.folder-selection','.processing-progress','.vision-result-section','.folder-actions','.ai-config-section','.content-viewer-section'];
+            toHide.forEach(function(sel){
+              container.querySelectorAll(sel).forEach(function(e){ e.style.display = 'none'; });
+            });
+            // 在设置页顶部注入一个显式的“保存配置”按钮
+            try{
+              let header = container.querySelector('.config-header');
+              if(!header){ header = container; }
+              if(header && !document.getElementById('save-all-settings-btn-top')){
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'display:flex;gap:8px;align-items:center;margin:8px 0;';
+                wrap.innerHTML = '<button id="save-all-settings-btn-top" class="save-btn">保存配置</button><span id="save-all-hint-top" style="font-size:12px;color:#666;display:none;">已保存</span>';
+                header.parentNode.insertBefore(wrap, header.nextSibling);
+                const btn = wrap.querySelector('#save-all-settings-btn-top');
+                const hint = wrap.querySelector('#save-all-hint-top');
+                if(btn){
+                  btn.addEventListener('click', function(){
+                    try{
+                      const payload = {
+                        mindmap_api_base: (document.getElementById('mindmap-api-base')?.value || localStorage.getItem('mindmap-api-base') || ''),
+                        mindmap_model: (document.getElementById('mindmap-model-select')?.value || localStorage.getItem('mindmap-model') || ''),
+                        mindmap_system_prompt: (document.getElementById('mindmap-system-prompt')?.value || localStorage.getItem('mindmap-system-prompt') || ''),
+                        mindmap_user_prompt: (document.getElementById('mindmap-user-prompt-template')?.value || localStorage.getItem('mindmap-user-prompt-template') || ''),
+                        mindmap_api_key: (document.getElementById('mindmap-api-key')?.value || localStorage.getItem('mindmap-api-key') || ''),
+                        ui_values: (function(){ const m={}; document.querySelectorAll('input,textarea,select').forEach(function(el){ if(!el.id) return; if(el.type==='checkbox'||el.type==='radio'){ m[el.id]=!!el.checked; } else { m[el.id]=el.value; } }); return m; })()
+                      };
+                      try{ localStorage.setItem('ui_values', JSON.stringify(payload.ui_values||{})); }catch(_e){}
+                      try{ if(payload.mindmap_api_base!=null) localStorage.setItem('mindmap-api-base', payload.mindmap_api_base);}catch(_e){}
+                      try{ if(payload.mindmap_model!=null) localStorage.setItem('mindmap-model', payload.mindmap_model);}catch(_e){}
+                      try{ if(payload.mindmap_system_prompt!=null) localStorage.setItem('mindmap-system-prompt', payload.mindmap_system_prompt);}catch(_e){}
+                      try{ if(payload.mindmap_user_prompt!=null) localStorage.setItem('mindmap-user-prompt-template', payload.mindmap_user_prompt);}catch(_e){}
+                      try{ if(payload.mindmap_api_key!=null) localStorage.setItem('mindmap-api-key', payload.mindmap_api_key);}catch(_e){}
+                      fetch('/save-settings', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) })
+                        .then(()=>{ if(hint){ hint.style.display='inline'; setTimeout(()=>{ hint.style.display='none'; }, 1200); } });
+                    }catch(_e){}
+                  });
+                }
+              }
+            }catch(_e){}
+          }catch(e){}
+        }
+        document.addEventListener('DOMContentLoaded', run);
+      })();
+    </script>
+    <!-- 选择区域遮罩层 -->
+    <div id="selection-overlay" class="selection-overlay" style="display: none;">
+        <div class="selection-instructions">
+            <p>请拖拽选择要截图的区域</p>
+            <button id="cancel-selection">取消选择</button>
+        </div>
+    </div>
+    
+    <!-- 加载提示 -->
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loading-text">正在处理...</p>
+        </div>
+    </div>
+    
+    <script src="content-extractor.js?v=1"></script>
+    <script src="ai-features.js?v=2"></script>
+    <script src="settings-persistence.js?v=1"></script>
+    <script>
+      // 可选：如果脚本里需要用到 api base，可从 localStorage 读取
+      // 例如：window.MINDMAP_API_BASE = localStorage.getItem('mindmap-api-base') || '';
+      window.MINDMAP_API_BASE = localStorage.getItem('mindmap-api-base') || '';
+      try{ if(window.SettingsPersistence && typeof window.SettingsPersistence.bootstrap==='function'){ window.SettingsPersistence.bootstrap(); } }catch(e){}
+    </script>
+    <script src="debug-image-processing.js?v=1"></script>
+    <script src="screenshot-fix.js?v=1"></script>
+    <script src="folder-processor.js?v=1"></script>
+    <script src="script.js?v=3"></script>
+</body>
+</html>

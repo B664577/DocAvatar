@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/home/long/mnt/d/AIPJ/016DocAvatar/dotsocr/demo/gradio_markdown_converter.py", line 307, in <module>
+    ui.launch(server_name="127.0.0.1", server_port=int(os.environ.get("GRADIO_PORT", 7860)))
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/long/miniconda3/lib/python3.13/site-packages/gradio/blocks.py", line 2794, in launch
+    ) = http_server.start_server(
+        ~~~~~~~~~~~~~~~~~~~~~~~~^
+        app=self.app,
+        ^^^^^^^^^^^^^
+    ...<4 lines>...
+        ssl_keyfile_password=ssl_keyfile_password,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/long/miniconda3/lib/python3.13/site-packages/gradio/http_server.py", line 156, in start_server
+    raise OSError(
+        f"Cannot find empty port in range: {min(server_ports)}-{max(server_ports)}. You can specify a different port by setting the GRADIO_SERVER_PORT environment variable or passing the `server_port` parameter to `launch()`."
+    )
+OSError: Cannot find empty port in range: 7860-7860. You can specify a different port by setting the GRADIO_SERVER_PORT environment variable or passing the `server_port` parameter to `launch()`.

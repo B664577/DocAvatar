@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 查看器</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="content-viewer-section">
+        <div class="viewer-header">
+            <h3>PDF 查看器</h3>
+            <div class="viewer-controls">
+                <input type="file" id="pdf-upload" accept=".pdf" style="display: none;">
+                <button id="upload-pdf-btn" class="control-btn">上传PDF</button>
+                <button id="screenshot-btn" class="control-btn">截图选区</button>
+                <button id="copy-text-btn" class="control-btn">复制文字</button>
+            </div>
+        </div>
+        <div class="content-viewer" id="content-viewer">
+            <div class="viewer-placeholder">
+                <p>请上传PDF文件开始使用</p>
+                <div class="upload-area" id="upload-area">
+                    <i>📄</i>
+                    <p>拖拽PDF文件到此处或点击上传按钮</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="selection-overlay" class="selection-overlay" style="display: none;">
+        <div class="selection-instructions">
+            <p>请拖拽选择要截图的区域</p>
+            <button id="cancel-selection">取消选择</button>
+        </div>
+    </div>
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loading-text">正在处理...</p>
+        </div>
+    </div>
+    <script src="pdf-viewer.js"></script>
+</body>
+</html>

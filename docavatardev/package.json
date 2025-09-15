@@ -1,0 +1,18 @@
+{
+  "name": "docavatardev",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "d3": "^7.9.0",
+    "markmap-autoloader": "^0.18.12",
+    "markmap-lib": "^0.18.12",
+    "markmap-view": "^0.18.12"
+  }
+}

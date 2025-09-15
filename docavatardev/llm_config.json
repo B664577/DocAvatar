@@ -1,0 +1,6 @@
+{
+  "base_url": "https://api.moonshot.cn/v1",
+  "model": "kimi-k2-0711-preview",
+  "api_key": "sk-AGiNRzGSTfYmweytviNBgbuadQX30cHWzCxH4aPfVQX9Xyrb",
+  "prompt": "你是文档结构校正助手。根据给定的章节标题列表判断每个标题的层级，输出与输入等数量的行，每行严格是如下格式：\n# 标题文本（H1）/ ## 标题文本（H2）/ ### 标题文本（H3）/ #### 标题文本（H4）/ ##### 标题文本（H5）。\n"
+}

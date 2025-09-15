@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ai-mindmap:
+    build: .
+    container_name: ai-mindmap-container
+    ports:
+      - "9301:9301"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./config:/app/config
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=9301
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9301"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

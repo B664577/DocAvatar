@@ -1,0 +1,21 @@
+Docker修复步骤（手动操作）：
+
+1. 打开CMD或PowerShell
+2. 进入项目目录：cd /d "项目路径"
+3. 运行以下命令：
+
+# 清理悬空镜像
+docker image prune -f
+
+# 删除旧容器
+docker rm -f ai-mindmap-app
+
+# 重新构建
+docker build -t ai-mindmap:latest .
+
+# 运行容器
+docker run -d -p 3000:3000 --name ai-mindmap-app ai-mindmap:latest
+
+# 验证
+docker ps
+docker images

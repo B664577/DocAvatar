@@ -1,0 +1,6 @@
+setup.py
+dots_ocr_plugin.egg-info/PKG-INFO
+dots_ocr_plugin.egg-info/SOURCES.txt
+dots_ocr_plugin.egg-info/dependency_links.txt
+dots_ocr_plugin.egg-info/requires.txt
+dots_ocr_plugin.egg-info/top_level.txt

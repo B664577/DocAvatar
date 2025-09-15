@@ -1,0 +1,48 @@
+
+> markdown-mindmap-viewer@1.0.0 start
+> node server.js
+
+思维导图应用已启动，访问 http://0.0.0.0:5173
+自动在浏览器中打开...
+Kimi API调用失败: {
+  error: {
+    message: 'Invalid Authentication',
+    type: 'invalid_authentication_error'
+  }
+}
+Kimi API调用失败: {
+  error: {
+    message: 'Invalid Authentication',
+    type: 'invalid_authentication_error'
+  }
+}
+Kimi API调用失败: {
+  error: {
+    message: 'Invalid Authentication',
+    type: 'invalid_authentication_error'
+  }
+}
+Kimi API调用失败: {
+  error: {
+    message: 'Invalid Authentication',
+    type: 'invalid_authentication_error'
+  }
+}
+Kimi API调用失败: {
+  error: {
+    message: 'Invalid Authentication',
+    type: 'invalid_authentication_error'
+  }
+}
+Kimi API调用失败: {
+  error: {
+    message: 'Invalid Authentication',
+    type: 'invalid_authentication_error'
+  }
+}
+Kimi API调用失败: {
+  error: {
+    message: 'Invalid Authentication',
+    type: 'invalid_authentication_error'
+  }
+}
